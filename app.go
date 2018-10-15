@@ -2,9 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/joshuabezaleel/salestock-backend/model"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -16,14 +20,14 @@ type App struct {
 }
 
 func (a *App) Initialize(user, password, dbname string) {
-	connectionString := fmt.Sprintf("%s:%s@/%s", user, password, dbname)
+	connectionString := fmt.Sprintf("%s:%s@%s", user, password, dbname)
 
 	var err error
 	a.DB, err = sql.Open("mysql", connectionString)
+
 	if err != nil {
 		log.Fatal(err)
-	}
-	if err == nil {
+	} else {
 		fmt.Println("Database connected")
 	}
 	a.Router = mux.NewRouter()
@@ -35,8 +39,82 @@ func (a *App) Run(addr string) {
 }
 
 func (a *App) InitializeRoutes() {
-	a.Router.HandleFunc("/products", GetProducts).Methods("GET")
-	a.Router.HandleFunc("/product/{id}", GetProduct).Methods("GET")
-	a.Router.HandleFunc("/product/{id}", CreateProduct).Methods("POST")
-	a.Router.HandleFunc("/product/{id}", DeleteProduct).Methods("DELETE")
+	a.Router.HandleFunc("/products", a.GetProducts).Methods("GET")
+	a.Router.HandleFunc("/product/{id}", a.GetProduct).Methods("GET")
+	a.Router.HandleFunc("/product/{id}", a.CreateProduct).Methods("POST")
+	a.Router.HandleFunc("/product/{id}", a.DeleteProduct).Methods("DELETE")
+}
+
+func (a *App) GetProducts(w http.ResponseWriter, r *http.Request) {
+	count, _ := strconv.Atoi(r.FormValue("count"))
+	start, _ := strconv.Atoi(r.FormValue("start"))
+	if count > 10 || count < 1 {
+		count = 10
+	}
+	if start < 0 {
+		start = 0
+	}
+	products, err := model.GetProducts(a.DB, start, count)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, products)
+}
+
+func (a *App) GetProduct(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Invalid Product ID")
+		return
+	}
+
+	P := model.Product{ID: id}
+	if err := P.GetProduct(a.DB); err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			RespondWithError(w, http.StatusNotFound, "Product not found")
+		default:
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, P)
+}
+
+func (a *App) CreateProduct(w http.ResponseWriter, r *http.Request) {
+	var P model.Product
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&P); err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	defer r.Body.Close()
+
+	if err := P.CreateProduct(a.DB); err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	RespondWithJSON(w, http.StatusCreated, P)
+
+}
+
+func (a *App) DeleteProduct(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func RespondWithError(w http.ResponseWriter, code int, message string) {
+	RespondWithJSON(w, code, map[string]string{"error": message})
+}
+
+func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	response, _ := json.Marshal(payload)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(response)
 }
