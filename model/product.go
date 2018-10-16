@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// Product comment
 type Product struct {
 	ID    int    `json:"id,omitempty"`
 	Name  string `json:"name,omitempty"`
@@ -55,21 +56,32 @@ func (P *Product) GetProduct(db *sql.DB) error {
 
 // CreateProduct function description
 func (P *Product) CreateProduct(db *sql.DB) error {
-	statement := fmt.Sprintf("INSERT INTO products (name, price) VALUES ('%s','%s')", P.Name, P.Price)
-	_, err := db.Exec(statement)
-	// err := db.QueryRow("INSERT INTO products(name, price) VALUES ('?','?') RETURNING id", P.Name, P.Price).Scan(&P.ID)
+	_, err :=
+		db.Exec("INSERT INTO products(name, price) VALUES(?,?)",
+			P.Name, P.Price)
 
-	if err != nil {
-		return err
-	}
+	return err
 
-	err = db.QueryRow("SELECT LAST_INSERT_ID()").Scan(&P.ID)
+	// err := db.QueryRow(
+	// 	"INSERT INTO products(name, price) VALUES(?, ?) RETURNING id",
+	// 	P.Name, P.Price).Scan(&P.ID)
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	return nil
+	// return nil
+
+	// statement := fmt.Sprintf("INSERT INTO products (name, price) VALUES ('%s','%s')", P.Name, P.Price)
+	// _, err := db.Exec(statement)
+	// // err := db.QueryRow("INSERT INTO products(name, price) VALUES ('?','?') RETURNING id", P.Name, P.Price).Scan(&P.ID)
+
+	// if err != nil {
+	// 	return err
+	// }
+
+	// return nil
+
 	// params := mux.Vars(r)
 	// var product Product
 	// _ = json.NewDecoder(r.Body).Decode(&product)
@@ -82,7 +94,7 @@ func (P *Product) CreateProduct(db *sql.DB) error {
 
 // DeleteProduct function description
 func (P *Product) DeleteProduct(db *sql.DB) error {
-	_, err := db.Exec("DELETE FROM products WHERE id=%d", P.ID)
+	_, err := db.Exec("DELETE FROM products WHERE id=?", P.ID)
 
 	return err
 	// params := mux.Vars(r)
@@ -95,4 +107,13 @@ func (P *Product) DeleteProduct(db *sql.DB) error {
 	// json.NewEncoder(w).Encode(products)
 	// fmt.Println("DELETE /product/{id} endpoint was hit")
 	// fmt.Println("Deleting a product")
+}
+
+// UpdateProduct function description
+func (P *Product) UpdateProduct(db *sql.DB) error {
+	_, err :=
+		db.Exec("UPDATE products SET name=$1, price=$2 WHERE id=$3",
+			P.Name, P.Price, P.ID)
+
+	return err
 }
