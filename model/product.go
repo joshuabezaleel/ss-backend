@@ -56,21 +56,21 @@ func (P *Product) GetProduct(db *sql.DB) error {
 
 // CreateProduct function description
 func (P *Product) CreateProduct(db *sql.DB) error {
-	_, err :=
-		db.Exec("INSERT INTO products(name, price) VALUES($1,$2)",
-			P.Name, P.Price)
+	// _, err :=
+	// 	db.Exec("INSERT INTO products(name, price) VALUES($1,$2) RETURNING id",
+	// 		P.Name, P.Price).Scan(&P.ID)
 
-	return err
+	// return err
 
-	// err := db.QueryRow(
-	// 	"INSERT INTO products(name, price) VALUES(?, ?) RETURNING id",
-	// 	P.Name, P.Price).Scan(&P.ID)
+	err := db.QueryRow(
+		"INSERT INTO products(name, price) VALUES($1, $2) RETURNING id",
+		P.Name, P.Price).Scan(&P.ID)
 
-	// if err != nil {
-	// 	return err
-	// }
+	if err != nil {
+		return err
+	}
 
-	// return nil
+	return nil
 
 	// statement := fmt.Sprintf("INSERT INTO products (name, price) VALUES ('%s','%s')", P.Name, P.Price)
 	// _, err := db.Exec(statement)
@@ -94,7 +94,7 @@ func (P *Product) CreateProduct(db *sql.DB) error {
 
 // DeleteProduct function description
 func (P *Product) DeleteProduct(db *sql.DB) error {
-	_, err := db.Exec("DELETE FROM products WHERE id=?", P.ID)
+	_, err := db.Exec("DELETE FROM products WHERE id=$1", P.ID)
 
 	return err
 	// params := mux.Vars(r)
