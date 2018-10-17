@@ -16,11 +16,8 @@ var a App
 // TestMain comment
 func TestMain(m *testing.M) {
 	a = App{}
-
-	dbUsername := "root"
-	dbPassword := ""
-	dbName := "tcp(localhost:3306)/salestock_backend_test"
-	a.Initialize(dbUsername, dbPassword, dbName)
+	dbname := "salestock_backend_test"
+	a.Initialize(host, port, user, password, dbname)
 
 	ensureTableExists()
 

@@ -7,9 +7,9 @@ import (
 
 // Product comment
 type Product struct {
-	ID    int    `json:"id,omitempty"`
-	Name  string `json:"name,omitempty"`
-	Price string `json:"price,omitempty"`
+	ID    int     `json:"id"`
+    Name  string  `json:"name"`
+    Price float64 `json:"price"`
 }
 
 // GetProducts function description
@@ -41,7 +41,7 @@ func GetProducts(db *sql.DB, start, count int) ([]Product, error) {
 
 // GetProduct function description
 func (P *Product) GetProduct(db *sql.DB) error {
-	return db.QueryRow("SELECT id, name, price FROM products WHERE id=?", P.ID).Scan(&P.ID, &P.Name, &P.Price)
+	return db.QueryRow("SELECT id, name, price FROM products WHERE id=$1", P.ID).Scan(&P.ID, &P.Name, &P.Price)
 	// params := mux.Vars(r)
 	// for _, product := range products {
 	// 	if product.ID == params["id"] {
@@ -57,7 +57,7 @@ func (P *Product) GetProduct(db *sql.DB) error {
 // CreateProduct function description
 func (P *Product) CreateProduct(db *sql.DB) error {
 	_, err :=
-		db.Exec("INSERT INTO products(name, price) VALUES(?,?)",
+		db.Exec("INSERT INTO products(name, price) VALUES($1,$2)",
 			P.Name, P.Price)
 
 	return err

@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/joshuabezaleel/salestock-backend/model"
+	"github.com/joshuabezaleel/ss-backend/model"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"github.com/gorilla/mux"
 )
 
@@ -21,11 +21,12 @@ type App struct {
 }
 
 // Initialize comment
-func (a *App) Initialize(user, password, dbname string) {
-	connectionString := fmt.Sprintf("%s:%s@%s", user, password, dbname)
+func (a *App) Initialize(host string, port int, user, password, dbname string) {
+	connectionString := fmt.Sprintf("host=%s port=%d user=%s "+
+	"password=%s dbname=%s sslmode=disable",host, port, user, password, dbname)
 
 	var err error
-	a.DB, err = sql.Open("mysql", connectionString)
+	a.DB, err = sql.Open("postgres", connectionString)
 
 	if err != nil {
 		log.Fatal(err)
