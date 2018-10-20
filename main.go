@@ -4,8 +4,8 @@ const (
 	host     = "localhost"
 	port     = 5432
 	user     = "joshuabezaleel"
-	password = "neph224301"
-  )
+	password = "postgres_password"
+)
 
 func main() {
 	// products = append(products, Product{ID: 1, Name: "Phone", Price: "12345"})
